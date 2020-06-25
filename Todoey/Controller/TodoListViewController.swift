@@ -10,7 +10,7 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    var itemArray: [String] = []
+    var itemArray: [Item] = []
     
     let defaultsKey = "TodoListArray"
     let defaults = UserDefaults.standard
@@ -18,7 +18,7 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if let array = defaults.array(forKey: defaultsKey) as? [String] {
+        if let array = defaults.array(forKey: defaultsKey) as? [Item] {
             self.itemArray = array
         }
     }
@@ -31,16 +31,21 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        cell.textLabel?.text = itemArray[indexPath.row]
+        let currentItem = itemArray[indexPath.row]
+        cell.textLabel?.text = currentItem.title
+        cell.accessoryType = currentItem.done ? .checkmark : .none
         return cell
     }
 
     //MARK: - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let cell = tableView.cellForRow(at: indexPath)
-        cell?.accessoryType = (cell?.accessoryType == .checkmark) ? .none : .checkmark
+        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        tableView.cellForRow(at: indexPath)?.accessoryType = itemArray[indexPath.row].done ? .checkmark : .none
+        
+        self.defaults.set(self.itemArray, forKey: self.defaultsKey)
         tableView.deselectRow(at: indexPath, animated: true)
+        tableView.reloadData()
     }
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -52,7 +57,10 @@ class TodoListViewController: UITableViewController {
                 return
             }
             
-            self.itemArray.append(text)
+            let newItem = Item()
+            newItem.title = text
+            self.itemArray.append(newItem)
+            
             self.defaults.set(self.itemArray, forKey: self.defaultsKey)
             self.tableView.reloadData()
         }
