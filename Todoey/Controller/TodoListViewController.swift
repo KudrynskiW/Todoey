@@ -7,12 +7,12 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
     
     var itemArray: [Item] = []
-    
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,20 +29,22 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
         let currentItem = itemArray[indexPath.row]
+        
         cell.textLabel?.text = currentItem.title
         cell.accessoryType = currentItem.done ? .checkmark : .none
+        
         return cell
     }
 
     //MARK: - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        context.delete(itemArray[indexPath.row])
+//        itemArray.remove(at: indexPath.row)
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
-        tableView.cellForRow(at: indexPath)?.accessoryType = itemArray[indexPath.row].done ? .checkmark : .none
         
-        tableView.deselectRow(at: indexPath, animated: true)
         self.saveTodoArray()
-        tableView.reloadData()
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -54,12 +56,12 @@ class TodoListViewController: UITableViewController {
                 return
             }
             
-            let newItem = Item()
+            let newItem = Item(context: self.context)
             newItem.title = text
-            self.itemArray.append(newItem)
+            newItem.done = false
             
+            self.itemArray.append(newItem)
             self.saveTodoArray()
-            self.tableView.reloadData()
         }
         
         alert.addTextField { alertTextField in
@@ -72,24 +74,22 @@ class TodoListViewController: UITableViewController {
     }
     
     func saveTodoArray() {
-        let encoder = PropertyListEncoder()
         do {
-            let data = try encoder.encode(itemArray)
-            try data.write(to: dataFilePath!)
+            try context.save()
         } catch {
-            print("Error encoding item \(error)")
+            print("Error saving context \(error)")
         }
+        tableView.reloadData()
     }
     
     func loadTodoArray() {
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            let decoder = PropertyListDecoder()
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print("Error while loading Todo Array \(error)")
-            }
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error loading context \(error)")
         }
+        
     }
 
 }

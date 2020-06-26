@@ -21,9 +21,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         self.saveContext()
     }
 
-    // MARK: Persistent Container
+    // MARK: Core Data 
     
-    lazy var persistenContainer: NSPersistentContainer  = {
+    lazy var persistentContainer: NSPersistentContainer  = {
         let container = NSPersistentContainer(name: "DataModel")
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
@@ -34,7 +34,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }()
     
     func saveContext() {
-        let context = persistenContainer.viewContext
+        let context = persistentContainer.viewContext
         if context.hasChanges {
             do {
                 try context.save()
