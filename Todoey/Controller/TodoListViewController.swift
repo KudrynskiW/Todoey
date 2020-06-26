@@ -11,14 +11,16 @@ import CoreData
 
 class TodoListViewController: UITableViewController {
     
-    var itemArray: [Item] = []
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-
+    var itemArray: [Item] = []
+    var selectedCategory: Category? {
+        didSet {
+            loadTodoArray()
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        
-        loadTodoArray()
     }
     
     //MARK: - TableView Datasource Methods
@@ -60,7 +62,7 @@ class TodoListViewController: UITableViewController {
             let newItem = Item(context: self.context)
             newItem.title = text
             newItem.done = false
-            
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             self.saveTodoArray()
         }
@@ -83,7 +85,17 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    func loadTodoArray(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
+    func loadTodoArray(predicate: NSPredicate? = nil) {
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = predicate {
+            let compundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+            request.predicate = compundPredicate
+        } else {
+            request.predicate = categoryPredicate
+        }
+    
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -108,11 +120,10 @@ extension TodoListViewController: UISearchBarDelegate {
         }
         
         let request: NSFetchRequest<Item> = Item.fetchRequest()
-        
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
-        loadTodoArray(with: request)
+        loadTodoArray(predicate: predicate)
         
         tableView.reloadData()
     }
