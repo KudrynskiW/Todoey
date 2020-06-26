@@ -17,6 +17,7 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        
         loadTodoArray()
     }
     
@@ -82,15 +83,38 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    func loadTodoArray() {
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
+    func loadTodoArray(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
         do {
             itemArray = try context.fetch(request)
         } catch {
             print("Error loading context \(error)")
         }
-        
     }
+    
 
+
+}
+
+extension TodoListViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        guard searchBar.text?.count != 0, let _ = searchBar.text else {
+            loadTodoArray()
+            tableView.reloadData()
+            
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+            return
+        }
+        
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        loadTodoArray(with: request)
+        
+        tableView.reloadData()
+    }
 }
 
