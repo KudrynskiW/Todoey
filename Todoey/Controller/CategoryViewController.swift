@@ -12,7 +12,7 @@ import RealmSwift
 class CategoryViewController: UITableViewController {
 
     let realm = try! Realm()
-    var categoriesArray: Results<Category>?
+    var categoriesResults: Results<Category>?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,12 +23,12 @@ class CategoryViewController: UITableViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let destinationVC = segue.destination as! TodoListViewController
         if let indexPath = tableView.indexPathForSelectedRow {
-            destinationVC.selectedCategory = categoriesArray?[indexPath.row]
+            destinationVC.selectedCategory = categoriesResults?[indexPath.row]
         }
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        categoriesArray?.count ?? 1
+        categoriesResults?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -40,7 +40,7 @@ class CategoryViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         
-        cell.textLabel?.text = categoriesArray?[indexPath.row].name ?? "No categories added yet"
+        cell.textLabel?.text = categoriesResults?[indexPath.row].name ?? "No categories added yet"
         
         return cell
     }
@@ -80,7 +80,7 @@ class CategoryViewController: UITableViewController {
     }
     
     func load() {
-        categoriesArray = realm.objects(Category.self)
+        categoriesResults = realm.objects(Category.self)
         tableView.reloadData()
     }
     
